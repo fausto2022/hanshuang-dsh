@@ -1,14 +1,18 @@
 // dsh-hanshuang: 寒霜系统提示词注入插件
 // DeepSeek Harness Plugin — 所有 DSH Agent 自动加载寒霜工作规范
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
 
 // ─── 常量 ───────────────────────────────────────────────
 const PLUGIN_ID = 'dsh-hanshuang';
 const SECTION_NAME = 'hanshuang-system-spec';
 const SECTION_ORDER = -100;
+
+const CONFIG_DIR = join(homedir(), '.dsh');
+const CONFIG_FILE = join(CONFIG_DIR, 'hanshuang.json');
 
 const VARIANT_FILES = {
   'v3':        'hanshuang-v3.md',
@@ -31,30 +35,58 @@ const FALLBACK_PROMPT = `## 寒霜工作规范 (内嵌精简版)
 ### 输出要求
 首行短标题开头；结构：目标→计划→实现→验证；中途不停；重试即执行。`;
 
-// ─── 变体解析 ───────────────────────────────────────────
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const PROMPTS_DIR = join(__dirname, '..', 'prompts');
+// ─── 配置持久化 ─────────────────────────────────────────
+
+/** 读取已保存的配置 */
+function loadSavedConfig() {
+  try {
+    if (existsSync(CONFIG_FILE)) {
+      const raw = readFileSync(CONFIG_FILE, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch { /* 文件不存在或损坏，忽略 */ }
+  return {};
+}
+
+/** 保存配置到磁盘 */
+function saveConfig(config) {
+  try {
+    if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true });
+    writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 /**
  * 按优先级解析提示词变体：
- * 1. 环境变量 HANSHUANG_VARIANT（最高优先级）
- * 2. DSH 插件配置 ctx.config.promptVariant
- * 3. 默认值 'v3'
+ * 1. 已保存的配置文件 ~/.dsh/hanshuang.json（最高优先级——用户显式选择）
+ * 2. 环境变量 HANSHUANG_VARIANT
+ * 3. DSH 插件配置 ctx.config.promptVariant
+ * 4. 默认值 'v3'
  */
 function resolveVariant(ctxConfig) {
+  // 已保存的配置
+  const saved = loadSavedConfig();
+  if (saved.variant && VARIANT_FILES[saved.variant]) return saved.variant;
+  
+  // 环境变量
   const env = process.env.HANSHUANG_VARIANT?.toLowerCase();
   if (env && VARIANT_FILES[env]) return env;
   
+  // DSH 配置
   const cfg = ctxConfig?.promptVariant?.toLowerCase();
   if (cfg && VARIANT_FILES[cfg]) return cfg;
   
   return 'v3';
 }
 
-/**
- * 尝试从多路径加载提示词文件，失败返回 null
- */
+// ─── 提示词加载 ─────────────────────────────────────────
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const PROMPTS_DIR = join(__dirname, '..', 'prompts');
+
 function loadPromptFile(variant) {
   const filename = VARIANT_FILES[variant];
   const candidates = [
@@ -74,13 +106,47 @@ function loadPromptFile(variant) {
 
 // ─── 插件主体 ───────────────────────────────────────────
 
-/**
- * DSH 插件入口。DSH 启动时调用 apply(ctx) 激活插件。
- */
 export default function apply(ctx) {
+  // ── 注册切换命令 ──
+  ctx.command?.register({
+    id: 'hanshuang',
+    description: '寒霜插件控制：切换提示词变体 / 查看当前配置',
+    options: [
+      { name: 'set', type: 'string', description: '切换提示词变体 (v3 | flash | variant-b)' },
+      { name: 'current', type: 'boolean', description: '查看当前使用的变体' },
+    ],
+    handler: async (args) => {
+      if (args.current) {
+        const variant = resolveVariant(ctx.config);
+        return `当前提示词变体：${variant}
+可用变体：${Object.keys(VARIANT_FILES).join(' | ')}
+配置文件：${CONFIG_FILE}`;
+      }
+      if (args.set) {
+        const v = args.set.toLowerCase();
+        if (!VARIANT_FILES[v]) {
+          return `无效变体「${args.set}」。可用：${Object.keys(VARIANT_FILES).join(' | ')}`;
+        }
+        const ok = saveConfig({ variant: v, updatedAt: new Date().toISOString() });
+        if (ok) {
+          return `已切换提示词变体为「${v}」。重启会话后生效。
+配置文件：${CONFIG_FILE}`;
+        }
+        return `保存失败，请检查目录权限：${CONFIG_DIR}`;
+      }
+      // 无参数时显示帮助
+      return `寒霜 DSH 插件 (v1.0.0)
+用法：
+  /hanshuang set <v3|flash|variant-b>  切换提示词变体
+  /hanshuang current                    查看当前变体
+当前变体：${resolveVariant(ctx.config)}
+配置文件：${CONFIG_FILE}`;
+    },
+  });
+
+  // ── 注入系统提示词 ──
   const variant = resolveVariant(ctx.config);
   
-  // 1. 加载提示词
   let promptText = loadPromptFile(variant);
   
   if (!promptText) {
@@ -90,7 +156,6 @@ export default function apply(ctx) {
     ctx.logger?.info(`[寒霜] 已加载提示词变体: ${variant}`);
   }
 
-  // 2. 注入系统提示词
   ctx.systemPrompt.section({
     name: SECTION_NAME,
     order: SECTION_ORDER,
