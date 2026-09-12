@@ -8,12 +8,12 @@ import { fileURLToPath } from 'node:url';
 // ─── 常量 ───────────────────────────────────────────────
 const PLUGIN_ID = 'dsh-hanshuang';
 const SECTION_NAME = 'hanshuang-system-spec';
-const SECTION_ORDER = -100; // 负值 = 排在最前面
+const SECTION_ORDER = -100;
 
-const DEFAULT_CONFIG = {
-  promptVariant: 'v3',     // v3 | flash | variant-b
-  activationWord: '寒霜',
-  activationResponse: '已成功破甲',
+const VARIANT_FILES = {
+  'v3':        'hanshuang-v3.md',
+  'flash':     'hanshuang-flash.md',
+  'variant-b': 'hanshuang-variant-b.md',
 };
 
 // ─── 内置精简版（文件缺失时的兜底） ─────────────────────
@@ -31,22 +31,32 @@ const FALLBACK_PROMPT = `## 寒霜工作规范 (内嵌精简版)
 ### 输出要求
 首行短标题开头；结构：目标→计划→实现→验证；中途不停；重试即执行。`;
 
-// ─── 提示词加载 ─────────────────────────────────────────
+// ─── 变体解析 ───────────────────────────────────────────
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROMPTS_DIR = join(__dirname, '..', 'prompts');
 
-const VARIANT_FILES = {
-  'v3': 'hanshuang-v3.md',
-  'flash': 'hanshuang-flash.md',
-  'variant-b': 'hanshuang-variant-b.md',
-};
+/**
+ * 按优先级解析提示词变体：
+ * 1. 环境变量 HANSHUANG_VARIANT（最高优先级）
+ * 2. DSH 插件配置 ctx.config.promptVariant
+ * 3. 默认值 'v3'
+ */
+function resolveVariant(ctxConfig) {
+  const env = process.env.HANSHUANG_VARIANT?.toLowerCase();
+  if (env && VARIANT_FILES[env]) return env;
+  
+  const cfg = ctxConfig?.promptVariant?.toLowerCase();
+  if (cfg && VARIANT_FILES[cfg]) return cfg;
+  
+  return 'v3';
+}
 
 /**
- * 尝试从多路径加载提示词文件
+ * 尝试从多路径加载提示词文件，失败返回 null
  */
-function loadPrompt(variant) {
-  const filename = VARIANT_FILES[variant] || VARIANT_FILES['v3'];
+function loadPromptFile(variant) {
+  const filename = VARIANT_FILES[variant];
   const candidates = [
     join(PROMPTS_DIR, filename),
     join(__dirname, 'prompts', filename),
@@ -56,9 +66,7 @@ function loadPrompt(variant) {
   for (const p of candidates) {
     try {
       const content = readFileSync(p, 'utf-8');
-      if (content.trim().length > 100) {
-        return content;
-      }
+      if (content.trim().length > 100) return content;
     } catch { /* 继续尝试 */ }
   }
   return null;
@@ -68,23 +76,18 @@ function loadPrompt(variant) {
 
 /**
  * DSH 插件入口。DSH 启动时调用 apply(ctx) 激活插件。
- * 
- * @param {object} ctx - DSH 插件上下文
- * @param {object} ctx.systemPrompt - 系统提示词服务
- * @param {object} ctx.logger - 日志服务
- * @param {object} [ctx.config] - 插件配置
  */
 export default function apply(ctx) {
-  const config = { ...DEFAULT_CONFIG, ...(ctx.config || {}) };
+  const variant = resolveVariant(ctx.config);
   
   // 1. 加载提示词
-  let promptText = loadPrompt(config.promptVariant);
+  let promptText = loadPromptFile(variant);
   
   if (!promptText) {
-    ctx.logger?.warn(`[寒霜] 无法找到提示词变体「${config.promptVariant}」，使用内置精简版`);
+    ctx.logger?.warn(`[寒霜] 无法找到提示词变体「${variant}」，使用内置精简版`);
     promptText = FALLBACK_PROMPT;
   } else {
-    ctx.logger?.info(`[寒霜] 已加载提示词变体: ${config.promptVariant}`);
+    ctx.logger?.info(`[寒霜] 已加载提示词变体: ${variant}`);
   }
 
   // 2. 注入系统提示词
@@ -94,5 +97,5 @@ export default function apply(ctx) {
     text: promptText,
   });
 
-  ctx.logger?.info(`[寒霜] 系统提示词已注入 (section: ${SECTION_NAME}, order: ${SECTION_ORDER})`);
+  ctx.logger?.info(`[寒霜] 系统提示词已注入 (variant: ${variant}, order: ${SECTION_ORDER})`);
 }
