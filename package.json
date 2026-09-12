@@ -1,0 +1,31 @@
+{
+  "name": "dsh-hanshuang",
+  "version": "1.0.0",
+  "description": "寒霜工程规范注入插件 — 为 DSH Agent 自动加载完整工作规范，覆盖授权、执行、输出纪律与硬拒绝场景",
+  "type": "module",
+  "main": "dsh/index.js",
+  "files": [
+    "dsh",
+    "prompts",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "hanshuang",
+    "system-prompt",
+    "cool-frost",
+    "engineering-spec"
+  ],
+  "author": "海鸥操作员",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/hanshuang-codex"
+  }
+}

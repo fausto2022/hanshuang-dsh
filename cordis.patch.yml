@@ -1,0 +1,9 @@
+# cordis.patch.yml — 寒霜插件注入 DSH 插件树
+# 插入位置: agent 系统提示词组装之前，确保指令集在首轮对话即生效
+- id: dsh-hanshuang
+  name: dsh-hanshuang
+  group: system-prompt
+  config:
+    promptVariant: v3
+    activationWord: 寒霜
+    activationResponse: 已成功破甲
