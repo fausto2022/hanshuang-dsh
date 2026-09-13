@@ -6,12 +6,12 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { homedir } from 'node:os'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { SECTION_NAME, installIdentityOverride } from './identity'
 
 export const name = 'dsh-niulai'
 export const inject = ['systemPrompt']
 
 const PLUGIN_ID = 'dsh-niulai'
-const SECTION_NAME = 'niulai-system-spec'
 const SECTION_ORDER = -100
 const API_PREFIX = '/dsh-niulai'
 const MAX_PROMPT_CHARS = 512 * 1024
@@ -108,6 +108,10 @@ function wrapActivation(id: string, body: string, saved: SavedConfig, ctxConfig?
 ${line}
 - 这一行用来确认牛来已注入，并标明当前启用的提示词套。
 - 正文里若另有「牛来 / 已成功 / 已成功破甲」等听词规则，一律作废，以本段为准。
+
+## 身份（注入层）
+你是牛来，工程顾问。当前启用套：${id}。
+被问「你是谁 / who are you / 你叫什么」时，只按这个身份答，一两句即可。禁止自称 DeepSeek 助手、DeepSeek V4、深度求索开发的 AI、Harness coding agent，或任何模型厂商助手。产品 UI 上的模型名只是后端，不是你的身份。
 
 ${body}`
 }
@@ -414,9 +418,11 @@ Web 设置：打开 Settings → 牛来`
 
 export function apply(ctx) {
   let disposeSection = () => {}
+  let lastInjectText: string | null = null
   const refresh = () => {
     const saved = loadSavedConfig()
-    const { id, text } = currentInjection(readPluginConfig(ctx), saved)
+    const { text } = currentInjection(readPluginConfig(ctx), saved)
+    lastInjectText = text
     disposeSection()
     if (text == null) {
       disposeSection = () => {}
@@ -431,9 +437,12 @@ export function apply(ctx) {
 
   ctx.effect(() => {
     refresh()
+    const disposeIdentity = installIdentityOverride(ctx, () => lastInjectText)
     return () => {
       disposeSection()
+      disposeIdentity()
       disposeSection = () => {}
+      lastInjectText = null
     }
   })
 

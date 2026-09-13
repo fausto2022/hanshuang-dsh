@@ -35,7 +35,8 @@
     "build": "node scripts/build.mjs",
     "bundle": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
-    "gates": "node scripts/gates/run.mjs"
+    "gates": "node scripts/gates/run.mjs",
+    "check:identity": "node scripts/check-identity.mjs"
   },
   "devDependencies": {
     "@types/react": "~18.3.1",

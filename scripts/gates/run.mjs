@@ -27,6 +27,16 @@ if (!patch || !patch.includes('- insert:') || !patch.includes('dsh-niulai')) err
 if (!existsSync(resolve(root, 'lib/client.js'))) errors.push('missing required file: lib/client.js')
 const client = readIfExists('lib/client.js')
 if (!client || !client.includes(`window.__ModuleLoader__.load({ id: ${JSON.stringify(pkg.name)}`)) errors.push('lib/client.js does not register the expected client id')
+const node = readIfExists('lib/index.js')
+if (!node || !node.includes('system-prompt/assemble')) errors.push('lib/index.js must register system-prompt/assemble identity fold')
+if (!node || !node.includes('niulai-system-spec')) errors.push('lib/index.js must keep niulai-system-spec section name')
+if (!node || !node.includes('who are you') || !node.includes('Harness coding agent')) {
+  errors.push('lib/index.js must inject who-am-i identity lock')
+}
+const v3 = readIfExists('prompts/niulai-v3.md')
+if (!v3 || !v3.includes('## 任务优先') || !v3.includes('## 硬输出') || !v3.includes('## 缺值占位') || !v3.includes('## 稳定锚')) {
+  errors.push('prompts/niulai-v3.md must include task-priority / hard-output / placeholder / stability clauses')
+}
 
 if (errors.length > 0) {
   console.error('[gates] failed')

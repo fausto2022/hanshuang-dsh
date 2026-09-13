@@ -55,3 +55,5 @@
 - 配置仍写入 `~/.dsh/niulai.json`，与原 `/niulai set` 命令共用。
 - 切换/保存后立即 `systemPrompt.section()` 重注册，后续对话生效，无需重启 web。
 - 恢复默认：`enabled: false` 时 dispose 牛来 section，不再注入；设置页顶部开关 +「DSH 默认」卡片 + `/niulai off`。
+- v3 补任务优先 / 硬输出 / 缺值占位 / 稳定锚；flash 核心块同步一条。不搬 dsh-purge 人设。
+- 注入开启时 `system-prompt/assemble` 双钩：剥 `harness:identity` 与官方 coding-agent 句，把 `niulai-system-spec` 折进 persona-prefix / persona。关掉即还原。不改 `cordis.patch.yml` 的 system-prompt 配置，不打 node_modules。
