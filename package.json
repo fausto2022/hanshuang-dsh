@@ -1,7 +1,7 @@
 {
-  "name": "dsh-hanshuang",
+  "name": "dsh-niulai",
   "version": "1.1.0",
-  "description": "寒霜工程规范注入插件 — 为 DSH Agent 自动加载完整工作规范，并提供 Web 设置页切换、编辑与导入提示词",
+  "description": "牛来工程规范注入插件 — 为 DSH Agent 自动加载完整工作规范，并提供 Web 设置页切换、编辑与导入提示词",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -45,15 +45,14 @@
   "keywords": [
     "dsh",
     "dsh-plugin",
-    "hanshuang",
+    "niulai",
     "system-prompt",
-    "cool-frost",
     "engineering-spec"
   ],
   "author": "海鸥操作员",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fausto2022/hanshuang-dsh.git"
+    "url": "https://github.com/fausto2022/niulai-dsh.git"
   }
 }

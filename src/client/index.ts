@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 export const inject = ['slots']
 export const immediately = true
 
-const API = '/dsh-hanshuang'
-const TAG_ID = 'dsh-hanshuang/HanshuangSettings.module.css'
+const API = '/dsh-niulai'
+const TAG_ID = 'dsh-niulai/NiulaiSettings.module.css'
 
 type PromptKind = 'builtin' | 'custom' | 'env' | 'default'
 type PromptItem = {
@@ -86,7 +86,7 @@ function ensureCss() {
   if (typeof document === 'undefined') return
   if (document.querySelector(`style[data-plugin-css=${JSON.stringify(TAG_ID)}]`)) return
   const tag = document.createElement('style')
-  tag.dataset.plugin = 'dsh-hanshuang'
+  tag.dataset.plugin = 'dsh-niulai'
   tag.dataset.pluginCss = TAG_ID
   tag.textContent = CSS
   document.head.appendChild(tag)
@@ -120,14 +120,14 @@ function fitLabel(id: string, kind: PromptKind) {
   return '自定义套'
 }
 
-function HanshuangSettings() {
+function NiulaiSettings() {
   const [state, setState] = useState<State | null>(null)
   const [selectedId, setSelectedId] = useState('')
   const [draft, setDraft] = useState('')
   const [draftName, setDraftName] = useState('')
   const [importName, setImportName] = useState('')
   const [importText, setImportText] = useState('')
-  const [wordDraft, setWordDraft] = useState('寒霜')
+  const [wordDraft, setWordDraft] = useState('牛来')
   const [replyDraft, setReplyDraft] = useState('已成功')
   const [busy, setBusy] = useState('')
   const [notice, setNotice] = useState<{ tone: 'ok' | 'err' | 'info'; text: string } | null>(null)
@@ -145,7 +145,7 @@ function HanshuangSettings() {
     setSelectedId(current.id)
     setDraft(current.text)
     setDraftName(current.name)
-    setWordDraft(next.activationWord || '寒霜')
+    setWordDraft(next.activationWord || '牛来')
     setReplyDraft(next.activationReply || '已成功')
   }, [])
 
@@ -203,36 +203,36 @@ function HanshuangSettings() {
 
   if (!state) {
     return React.createElement('div', { className: 'hs-root' },
-      React.createElement('p', { className: 'hs-status' }, busy ? '正在读取寒霜配置…' : (notice?.text ?? '未能读取配置')),
+      React.createElement('p', { className: 'hs-status' }, busy ? '正在读取牛来配置…' : (notice?.text ?? '未能读取配置')),
       notice?.tone === 'err' ? React.createElement('button', { className: 'hs-btn', type: 'button', onClick: () => void load() }, '重试') : null,
     )
   }
 
   return React.createElement('div', { className: 'hs-root' },
     React.createElement('header', { className: 'hs-head' },
-      React.createElement('div', { className: 'hs-kicker' }, 'HANSHUANG'),
-      React.createElement('h2', { className: 'hs-title' }, '寒霜提示词'),
-      React.createElement('p', { className: 'hs-lead' }, '选择注入 Agent 的系统提示词。不想用时恢复 DSH 默认，后续对话立即不再注入寒霜。'),
+      React.createElement('div', { className: 'hs-kicker' }, 'NIULAI'),
+      React.createElement('h2', { className: 'hs-title' }, '牛来提示词'),
+      React.createElement('p', { className: 'hs-lead' }, '选择注入 Agent 的系统提示词。不想用时恢复 DSH 默认，后续对话立即不再注入牛来。'),
       React.createElement('p', { className: 'hs-guide' }, '本 GUI 日常用 v3；要短刻度结单切 astra。窗口小或模型弱用 flash。Opus / GPT-5 / Grok 4 等顶级英文模型才用 variant-b。'),
     ),
     React.createElement('div', { className: 'hs-switch' },
       React.createElement('div', { className: 'hs-switchBody' },
-        React.createElement('div', { className: 'hs-switchTitle' }, state.enabled ? '寒霜注入已开启' : '已恢复 DSH 默认'),
+        React.createElement('div', { className: 'hs-switchTitle' }, state.enabled ? '牛来注入已开启' : '已恢复 DSH 默认'),
         React.createElement('div', { className: 'hs-switchMeta' }, state.enabled
           ? '当前会把选中的提示词注入系统提示。关闭后立即回到 Harness 原提示词，已保存的套仍保留。'
-          : '寒霜不再注入。重新打开开关，或启用任一内置/自定义套即可恢复。'),
+          : '牛来不再注入。重新打开开关，或启用任一内置/自定义套即可恢复。'),
       ),
       React.createElement('button', {
         type: 'button',
         className: 'hs-toggle',
         'data-on': String(state.enabled),
         'aria-pressed': String(state.enabled),
-        'aria-label': state.enabled ? '关闭寒霜注入' : '开启寒霜注入',
+        'aria-label': state.enabled ? '关闭牛来注入' : '开启牛来注入',
         disabled: Boolean(busy),
         onClick: () => void run(
           'enable',
           () => api('/enable', { method: 'POST', body: JSON.stringify({ enabled: !state.enabled }) }),
-          state.enabled ? '已恢复 DSH 默认系统提示词，寒霜不再注入。' : '已重新开启寒霜注入。',
+          state.enabled ? '已恢复 DSH 默认系统提示词，牛来不再注入。' : '已重新开启牛来注入。',
           state.enabled ? 'dsh-default' : (state.storedId || state.activeId),
         ),
       }, React.createElement('span')),
@@ -241,7 +241,7 @@ function HanshuangSettings() {
       React.createElement('div', { className: 'hs-latchTitle' }, '听词探测'),
       React.createElement('div', { className: 'hs-latchMeta' }, '整句恰好等于听词时，所有套都只回同一行，并带上当前套 id。正文里的旧听词作废。'),
       React.createElement('div', { className: 'hs-latchPreview' }, state.enabled
-        ? `用户说「${state.activationWord || '寒霜'}」→ ${state.activationPreview || `${state.activationReply || '已成功'} · ${state.activeId}`}`
+        ? `用户说「${state.activationWord || '牛来'}」→ ${state.activationPreview || `${state.activationReply || '已成功'} · ${state.activeId}`}`
         : '当前未注入，听词不会触发。'),
       React.createElement('div', { className: 'hs-latchGrid' },
         React.createElement('div', null,
@@ -275,7 +275,7 @@ function HanshuangSettings() {
       ),
     ),
     notice ? React.createElement('div', { className: 'hs-banner', 'data-tone': notice.tone }, notice.text) : null,
-    state.envPath && state.enabled ? React.createElement('div', { className: 'hs-banner' }, '检测到 HANSHUANG_PROMPT_PATH，当前实际注入来自该文件。关闭注入或清除该环境变量后才会改用设置页选择。') : null,
+    state.envPath && state.enabled ? React.createElement('div', { className: 'hs-banner' }, '检测到 NIULAI_PROMPT_PATH，当前实际注入来自该文件。关闭注入或清除该环境变量后才会改用设置页选择。') : null,
     React.createElement('ul', { className: 'hs-grid' },
       state.items.map((item) => React.createElement('li', { key: item.id },
         React.createElement('button', {
@@ -297,7 +297,7 @@ function HanshuangSettings() {
       )),
     ),
     selected ? React.createElement('section', { className: 'hs-editor' },
-      React.createElement('div', { className: 'hs-label' }, selected.kind === 'default' ? 'DSH 默认（不注入寒霜）' : (readOnly ? '环境变量提示词（只读）' : '编辑当前提示词')),
+      React.createElement('div', { className: 'hs-label' }, selected.kind === 'default' ? 'DSH 默认（不注入牛来）' : (readOnly ? '环境变量提示词（只读）' : '编辑当前提示词')),
       selected.kind === 'custom' ? React.createElement('input', {
         className: 'hs-input',
         value: draftName,
@@ -305,7 +305,7 @@ function HanshuangSettings() {
         disabled: Boolean(busy) || readOnly,
       }) : null,
       selected.kind === 'default'
-        ? React.createElement('div', { className: 'hs-banner' }, '不会写入寒霜段落。Agent 只使用 DeepSeek Harness 自带的系统提示词。已保存的内置改写和自定义套都还在，随时可以再启用。')
+        ? React.createElement('div', { className: 'hs-banner' }, '不会写入牛来段落。Agent 只使用 DeepSeek Harness 自带的系统提示词。已保存的内置改写和自定义套都还在，随时可以再启用。')
         : React.createElement('textarea', {
           className: 'hs-area',
           value: draft,
@@ -323,7 +323,7 @@ function HanshuangSettings() {
             method: 'POST',
             body: JSON.stringify({ id: selected.id }),
           }), selected.kind === 'default'
-            ? '已恢复 DSH 默认系统提示词，寒霜不再注入。'
+            ? '已恢复 DSH 默认系统提示词，牛来不再注入。'
             : `已启用「${selected.name}」，后续对话立即生效。`, selected.id),
         }, selected.active
           ? (selected.kind === 'default' ? '当前为 DSH 默认' : '使用中')
@@ -360,7 +360,7 @@ function HanshuangSettings() {
       React.createElement('div', { className: 'hs-label' }, '导入自定义提示词'),
       React.createElement('input', {
         className: 'hs-input',
-        placeholder: '名称，例如 我的寒霜',
+        placeholder: '名称，例如 我的牛来',
         value: importName,
         onChange: (event: React.ChangeEvent<HTMLInputElement>) => setImportName(event.target.value),
       }),
@@ -412,8 +412,8 @@ function HanshuangSettings() {
 export function apply(ctx) {
   ctx.effect(() => ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
-    id: 'hanshuang',
+    id: 'niulai',
     order: 25,
-    label: '寒霜',
-  }, HanshuangSettings)))
+    label: '牛来',
+  }, NiulaiSettings)))
 }
