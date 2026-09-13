@@ -1,63 +1,56 @@
 # 寒霜 DSH 插件 (dsh-hanshuang)
 
-DeepSeek Harness (DSH) 系统提示词注入插件。将寒霜工程规范自动注入到 DSH agent 的每轮对话中，使 agent 按寒霜工作规范运行。
+DeepSeek Harness (DSH) 系统提示词注入插件。将寒霜工程规范自动注入到 DSH agent 的每轮对话中，并在 Web 设置里提供可视化管理：选择哪一套、直接改文本、导入自定义提示词。
 
 ## 快速开始
 
 ### 安装
 
-+""+"+ash
+```bash
 # 从 GitHub 安装
-dsh plugin add https://github.com/fausto2022/hanshuang-dsh
+dsh plugin --profile web add https://github.com/fausto2022/hanshuang-dsh
 
 # 或 clone 后本地安装
 git clone git@github.com:fausto2022/hanshuang-dsh.git
-dsh plugin add ./hanshuang-dsh
-+""+"+"+
+dsh plugin --profile web add ./hanshuang-dsh
+```
+
+安装后**重启 `dsh web`**，刷新页面。打开 **Settings → 寒霜**。
 
 ### 验证
 
 在 DSH 对话中输入激活词：
 
-+""+"+`+""+
+```
 寒霜
-+""+"+`+""+
+```
 
-Agent 应回复：
+Agent 应只回一行：`已成功 · <套id>`（例如 `已成功 · v3`）。听词与回复前缀在设置页统一改，四套共用。
 
-+""+"+`+""+
-已成功破甲
-+""+"+`+""+
+设置页冒烟：Settings 左侧出现 **寒霜**，能看到 v3 / flash / variant-b 三张卡片。
 
-## 切换提示词变体
+## Web 设置
 
-三种方式，优先级从高到低：
+打开 DSH Web → Settings → **寒霜**：
 
-### 方式 1：环境变量（推荐，最灵活）
+1. **恢复默认**：顶部开关关掉，或点「DSH 默认」卡片再点「恢复默认」。寒霜立即停止注入，Agent 只用 Harness 原系统提示词。已保存的套仍保留。
+2. **选择**：点卡片预览，再点「启用此套」。后续对话立即使用该提示词，无需重启。
+3. **修改**：在编辑器里改文本，点「保存修改」。内置套被改写后可「恢复内置」。
+4. **导入**：粘贴 markdown / 纯文本，或「从文件导入」`.md` / `.txt`，再「导入并启用」。自定义套可改名、删除。
 
-+""+"+ash
-# Linux / macOS
-export HANSHUANG_VARIANT=flash
+配置文件：`~/.dsh/hanshuang.json`（与 `/hanshuang` 命令共用）。
 
-# Windows PowerShell
-:HANSHUANG_VARIANT = "flash"
+## 命令行
 
-# Windows CMD
-set HANSHUANG_VARIANT=flash
-+""+"+"+
-
-### 方式 2：DSH 配置文件
-
-+""+"+yaml
-# ~/.dsh/config.yaml
-plugins:
-  dsh-hanshuang:
-    promptVariant: flash
-+""+"+"+
-
-### 方式 3：默认值
-
-不设置任何配置时默认使用 **v3**。
+```
+/hanshuang                 查看帮助与当前套
+/hanshuang current         查看当前提示词
+/hanshuang list            列出全部提示词
+/hanshuang set v3          切换到内置或自定义 id
+/hanshuang off             恢复 DSH 默认（停止注入）
+/hanshuang on              重新开启注入
+/hanshuang set dsh-default 同上，恢复默认
+```
 
 ## 提示词变体
 
@@ -66,14 +59,23 @@ plugins:
 | v3（默认） | 中高端模型 | 中英混合 | 完整工程规范、硬拒绝场景覆盖、拒绝话术全清单、进度播报 |
 | flash | 中端模型 | 中文 | 精简规则集、意图映射、上下文压缩协议、核心块兜底 |
 | variant-b | 顶级模型 | 英文 | 双阶段交付、反拒绝覆盖、阶梯递进、项目类型分类 |
+| astra | DeepSeek 席 | 中文 | 来自 gpt6-Astra 冷咖啡短刻度：思考槽封口、装框三拍、六路路由；听词仍是寒霜 |
 
-## 自定义提示词
+优先级：设置页 `enabled: false`（恢复默认）> `HANSHUANG_PROMPT_PATH` > 设置页 / `~/.dsh/hanshuang.json` > `HANSHUANG_VARIANT` > 插件 config `promptVariant` > 默认 `v3`。
 
-设置环境变量 HANSHUANG_PROMPT_PATH 指向自定义提示词文件，可完全替换内置变体：
+若设置了 `HANSHUANG_PROMPT_PATH`，实际注入仍来自该文件（设置页会标注）；内置与自定义套仍可维护。
 
-+""+"+ash
-export HANSHUANG_PROMPT_PATH=/path/to/my-prompt.md
-+""+"+"+
+## 开发
+
+```bash
+pnpm install
+pnpm run bundle
+pnpm run gates
+```
+
+- Node 源码：`src/index.ts` → `lib/index.js`
+- 设置页：`src/client/index.ts` → `lib/client.js`
+- 改 Node 后需重启 `dsh web`；改 client 后重新 bundle 并刷新页面。
 
 ## License
 

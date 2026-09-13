@@ -1,18 +1,46 @@
 {
   "name": "dsh-hanshuang",
-  "version": "1.0.0",
-  "description": "寒霜工程规范注入插件 — 为 DSH Agent 自动加载完整工作规范，覆盖授权、执行、输出纪律与硬拒绝场景",
+  "version": "1.1.0",
+  "description": "寒霜工程规范注入插件 — 为 DSH Agent 自动加载完整工作规范，并提供 Web 设置页切换、编辑与导入提示词",
   "type": "module",
-  "main": "dsh/index.js",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
   "files": [
-    "dsh",
+    "lib/index.js",
+    "lib/client.js",
     "prompts",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
   ],
   "dsh": {
     "bundle": {
-      "patch": "cordis.patch.yml"
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-general"
+      ]
     }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "bundle": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "gates": "node scripts/gates/run.mjs"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.1",
+    "esbuild": "^0.28.1",
+    "react": "^18.2.0"
   },
   "keywords": [
     "dsh",
